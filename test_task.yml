@@ -1,0 +1,25 @@
+---
+- hosts: localhost
+  tasks:
+
+  - name: Run ssh container
+    shell: docker run --name sshd -p 80:80 -dt eg_sshd
+
+  - name: Install Nginx
+    shell: docker exec sshd apt-get install -y nginx
+    async: 300
+
+  - name: Run Nginx
+    shell: docker exec sshd service nginx start
+
+  - name: Remove default page
+    shell: docker exec sshd rm -f /var/www/html/index.nginx-debian.html
+
+  - name: Add Mem info about container
+    shell: docker exec sshd bash -c 'echo "$(cat /proc/meminfo | grep MemTotal); " > /var/www/html/index.html'
+
+  - name: Add CPU info about container
+    shell: docker exec sshd bash -c 'echo "CPU_CORES $(nproc --all); " >> /var/www/html/index.html'
+
+  - name: Add HDD size info about container
+    shell: docker exec sshd bash -c "echo HDD $(lsblk | grep disk | awk '{print $4}') >> /var/www/html/index.html"
